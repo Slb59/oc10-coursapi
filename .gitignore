@@ -1,4 +1,20 @@
+# no environnement, ide files
+__pycache__
 .venv
+.env
+
+# no save files
+*~*
 .idea
+
+# no logs file
+*.log
+
+# no driver
+tools
+
+# no tests
+.pytest_cache
+
+# no databse
 *.sqlite3
-__pycache__/
