@@ -2,7 +2,7 @@ from django.urls import path, include
 
 from rest_framework import routers
 
-from .views import CategoryViewset, ProductViewset
+from .views import CategoryViewset, ProductViewset, ArtcileViewset
 
 app_name = 'shop'
 
@@ -12,6 +12,7 @@ router = routers.SimpleRouter()
 # afin que l’url générée soit celle que nous souhaitons ‘/api/category/’
 router.register('category', CategoryViewset, basename='category')
 router.register('product', ProductViewset, basename='product')
+router.register('article', ArtcileViewset, basename='article')
 
 urlpatterns = [
     path('', include(router.urls))
