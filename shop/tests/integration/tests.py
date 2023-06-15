@@ -52,6 +52,19 @@ class ShopAPITestCase(APITestCase):
             } for product in products
         ]
 
+    def get_product_detail_data(self, products):
+        return [
+            {
+                'id': product.pk,
+                'name': product.name,
+                'date_created': self.format_datetime(product.date_created),
+                'date_updated': self.format_datetime(product.date_updated),
+                'category': product.category_id,
+                'articles': self.get_article_list_data(
+                    product.articles.filter(active=True))
+            } for product in products
+        ]
+
     def get_category_list_data(self, categories):
         return [
             {
@@ -59,8 +72,8 @@ class ShopAPITestCase(APITestCase):
                 'name': category.name,
                 'date_created': self.format_datetime(category.date_created),
                 'date_updated': self.format_datetime(category.date_updated),
-                'products': self.get_product_list_data(
-                    category.products.filter(active=True))
+                # 'products': self.get_product_list_data(
+                #     category.products.filter(active=True))
             } for category in categories
         ]
 
@@ -81,6 +94,24 @@ class TestCategory(ShopAPITestCase):
             response.json()['results'],
             self.get_category_list_data([self.category, self.category_2])
             )
+
+    def test_detail(self):
+
+        url_detail = reverse(
+            'shop:category-detail', kwargs={'pk': self.category.pk}
+            )
+        response = self.client.get(url_detail)
+
+        self.assertEqual(response.status_code, 200)
+        excepted = {
+            'id': self.category.pk,
+            'name': self.category.name,
+            'date_created': self.format_datetime(self.category.date_created),
+            'date_updated': self.format_datetime(self.category.date_updated),
+            'products': self.get_product_detail_data(
+                self.category.products.filter(active=True)),
+        }
+        self.assertEqual(excepted, response.json())
 
     def test_create(self):
         # We save the count of category

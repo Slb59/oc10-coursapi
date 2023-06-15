@@ -3,16 +3,22 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 # from rest_framework.response import Response
 
 from .models import Category, Product, Article
-from .serializers import CategorySerializer
+from .serializers import CategoryDetailSerializer, CategoryListSerializer
 from .serializers import ProductSerializer, ArticleSerializer
 
 
 class CategoryViewset(ReadOnlyModelViewSet):
 
-    serializer_class = CategorySerializer
+    serializer_class = CategoryListSerializer
+    detail_serializer_class = CategoryDetailSerializer
 
     def get_queryset(self):
         return Category.objects.filter(active=True)
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve':
+            return self.detail_serializer_class
+        return super().get_serializer_class()
 
 
 class ProductViewset(ReadOnlyModelViewSet):
