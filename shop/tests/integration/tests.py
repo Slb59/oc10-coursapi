@@ -28,6 +28,42 @@ class ShopAPITestCase(APITestCase):
         # in string of characters in the same format as that of the api
         return value.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
+    def get_article_list_data(self, articles):
+        return [
+            {
+                'id': article.pk,
+                'name': article.name,
+                'date_created': self.format_datetime(article.date_created),
+                'date_updated': self.format_datetime(article.date_updated),
+                'product': article.product_id
+            } for article in articles
+        ]
+
+    def get_product_list_data(self, products):
+        return [
+            {
+                'id': product.pk,
+                'name': product.name,
+                'date_created': self.format_datetime(product.date_created),
+                'date_updated': self.format_datetime(product.date_updated),
+                'category': product.category_id,
+                'articles': self.get_article_list_data(
+                    product.articles.filter(active=True))
+            } for product in products
+        ]
+
+    def get_category_list_data(self, categories):
+        return [
+            {
+                'id': category.id,
+                'name': category.name,
+                'date_created': self.format_datetime(category.date_created),
+                'date_updated': self.format_datetime(category.date_updated),
+                'products': self.get_product_list_data(
+                    category.products.filter(active=True))
+            } for category in categories
+        ]
+
 
 class TestCategory(ShopAPITestCase):
     # We store the endpoint url in a class attribute
@@ -41,15 +77,10 @@ class TestCategory(ShopAPITestCase):
         # We check that the status code is 200
         # and that the values returned are those expected
         self.assertEqual(response.status_code, 200)
-        excepted = [
-            {
-                'id': category.pk,
-                'name': category.name,
-                'date_created': self.format_datetime(category.date_created),
-                'date_updated': self.format_datetime(category.date_updated),
-            } for category in [self.category, self.category_2]
-        ]
-        self.assertEqual(excepted, response.json())
+        self.assertEqual(
+            response.json()['results'],
+            self.get_category_list_data([self.category, self.category_2])
+            )
 
     def test_create(self):
         # We save the count of category
@@ -67,30 +98,21 @@ class TestCategory(ShopAPITestCase):
 class TestProduct(ShopAPITestCase):
     url = reverse_lazy('shop:product-list')
 
-    def get_product_detail_data(self, products):
-        # fields = ['id', 'name', 'date_created', 'date_updated', 'category']
-        return [
-            {
-                'id': product.pk,
-                'name': product.name,
-                'date_created': self.format_datetime(product.date_created),
-                'date_updated': self.format_datetime(product.date_updated),
-                'category': product.category_id
-            } for product in products
-        ]
-
     def test_list(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(self.get_product_detail_data(
-            [self.product, self.product_2]), response.json())
+        self.assertEqual(
+            response.json()['results'],
+            self.get_product_list_data([self.product, self.product_2])
+            )
 
     def test_list_filter(self):
         response = self.client.get(
             self.url + '?category_id=%i' % self.category.pk)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
-            self.get_product_detail_data([self.product]), response.json())
+            response.json()['results'],
+            self.get_product_list_data([self.product]))
 
     def test_create(self):
         product_count = Product.objects.count()
