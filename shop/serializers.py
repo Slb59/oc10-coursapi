@@ -42,7 +42,8 @@ class ProductListSerializer(ModelSerializer):
             'id', 'name',
             'date_created', 'date_updated',
             'description',
-            'category'
+            'category',
+            'ecoscore'
             ]
 
 
