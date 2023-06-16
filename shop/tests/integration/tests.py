@@ -1,7 +1,10 @@
+from unittest import mock
+
 from django.urls import reverse_lazy, reverse
 from rest_framework.test import APITestCase
 
 from shop.models import Category, Product
+from shop.mocks import mock_openfoodfact_success, ECOSCORE_GRADE
 
 
 class ShopAPITestCase(APITestCase):
@@ -61,7 +64,8 @@ class ShopAPITestCase(APITestCase):
                 'date_updated': self.format_datetime(product.date_updated),
                 'category': product.category_id,
                 'articles': self.get_article_list_data(
-                    product.articles.filter(active=True))
+                    product.articles.filter(active=True)),
+                'ecoscore': ECOSCORE_GRADE
             } for product in products
         ]
 
@@ -72,6 +76,7 @@ class ShopAPITestCase(APITestCase):
                 'name': category.name,
                 'date_created': self.format_datetime(category.date_created),
                 'date_updated': self.format_datetime(category.date_updated),
+                'description': ''
                 # 'products': self.get_product_list_data(
                 #     category.products.filter(active=True))
             } for category in categories
@@ -127,7 +132,23 @@ class TestCategory(ShopAPITestCase):
 
 
 class TestProduct(ShopAPITestCase):
+
     url = reverse_lazy('shop:product-list')
+
+    @mock.patch(
+        'shop.models.Product.call_external_api',
+        mock_openfoodfact_success
+        )
+    # Le premier paramètre est la méthode à mocker
+    # Le second est le mock à appliquer
+    def test_detail(self):
+        response = self.client.get(
+            reverse('shop:product-detail', kwargs={'pk': self.product.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json(),
+            self.get_product_detail_data(self.product),            
+            )
 
     def test_list(self):
         response = self.client.get(self.url)

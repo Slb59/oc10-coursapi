@@ -15,11 +15,13 @@ def mock_openfoodfact_success(self, method, url):
             }
         }
 
-    # Créons la réponse et modifions ses valeurs pour que le status code et les données
+    # Créons la réponse et modifions ses valeurs
+    # pour que le status code et les données
     # correspondent à nos attendus
     response = requests.Response()
     response.status_code = 200
     # Nous monkey patchons response.json
-    # Attention à ne pas mettre les (), nous n'appelons pas la méthode mais la remplaçons
+    # Attention à ne pas mettre les (), nous n'appelons pas
+    #  la méthode mais la remplaçons
     response.json = monkey_json
     return response
