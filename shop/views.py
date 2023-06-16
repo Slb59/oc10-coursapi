@@ -1,12 +1,12 @@
 # from rest_framework.views import APIView
-from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 from rest_framework.response import Response
 from rest_framework.decorators import action
 
 from .models import Category, Product, Article
 from .serializers import CategoryDetailSerializer, CategoryListSerializer
 from .serializers import ProductDetailSerializer, ProductListSerializer
-from .serializers import ArticleSerializer
+from .serializers import ArticleDetailSerializer, ArticleListSerializer
 
 
 class MultipleSerializerMixin:
@@ -35,6 +35,15 @@ class CategoryViewset(ReadOnlyModelViewSet, MultipleSerializerMixin):
         return Response()  # return 200
 
 
+class AdminCategoryViewset(MultipleSerializerMixin, ModelViewSet):
+
+    serializer_class = CategoryListSerializer
+    detail_serializer_class = CategoryDetailSerializer
+
+    def get_queryset(self):
+        return Category.objects.all()
+
+
 class ProductViewset(ReadOnlyModelViewSet, MultipleSerializerMixin):
 
     serializer_class = ProductListSerializer
@@ -55,9 +64,10 @@ class ProductViewset(ReadOnlyModelViewSet, MultipleSerializerMixin):
         return Response()  # return 200
 
 
-class ArtcileViewset(ReadOnlyModelViewSet):
+class ArtcileViewset(ReadOnlyModelViewSet, MultipleSerializerMixin):
 
-    serializer_class = ArticleSerializer
+    serializer_class = ArticleListSerializer
+    detail_serializer_class = ArticleDetailSerializer
 
     def get_queryset(self):
         queryset = Article.objects.filter(active=True)
@@ -66,17 +76,11 @@ class ArtcileViewset(ReadOnlyModelViewSet):
             queryset = queryset.filter(product_id=product_id)
         return queryset
 
-# class CategoryView(APIView):
 
-#     def get(self, *args, **kwargs):
-#         categories = Category.objects.all()
-#         serializer = CategorySerializer(categories, many=True)
-#         return Response(serializer.data)
+class AdminArticleViewset(MultipleSerializerMixin, ModelViewSet):
 
+    serializer_class = ArticleListSerializer
+    detail_serializer_class = ArticleDetailSerializer
 
-# class ProductView(APIView):
-
-#     def get(self, *args, **kwargs):
-#         products = Product.objects.all()
-#         serializer = ProductSerializer(products, many=True)
-#         return Response(serializer.data)
+    def get_queryset(self):
+        return Article.objects.all()
