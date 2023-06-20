@@ -34,11 +34,12 @@ class ShopAPITestCase(APITestCase):
     def get_article_list_data(self, articles):
         return [
             {
-                'id': article.pk,
-                'name': article.name,
+                'id': article.pk,                
                 'date_created': self.format_datetime(article.date_created),
                 'date_updated': self.format_datetime(article.date_updated),
-                'product': article.product_id
+                'name': article.name,
+                'product': article.product_id,
+                'price': article.price
             } for article in articles
         ]
 
@@ -49,13 +50,13 @@ class ShopAPITestCase(APITestCase):
                 'name': product.name,
                 'date_created': self.format_datetime(product.date_created),
                 'date_updated': self.format_datetime(product.date_updated),
+                'description': product.description,
                 'category': product.category_id,
-                'articles': self.get_article_list_data(
-                    product.articles.filter(active=True))
+                'ecoscore': ECOSCORE_GRADE
             } for product in products
         ]
 
-    def get_product_detail_data(self, products):
+    def get_product_detail_data(self, product):
         return [
             {
                 'id': product.pk,
@@ -64,9 +65,8 @@ class ShopAPITestCase(APITestCase):
                 'date_updated': self.format_datetime(product.date_updated),
                 'category': product.category_id,
                 'articles': self.get_article_list_data(
-                    product.articles.filter(active=True)),
-                'ecoscore': ECOSCORE_GRADE
-            } for product in products
+                    product.articles.filter(active=True))
+            }
         ]
 
     def get_category_list_data(self, categories):
@@ -113,7 +113,7 @@ class TestCategory(ShopAPITestCase):
             'name': self.category.name,
             'date_created': self.format_datetime(self.category.date_created),
             'date_updated': self.format_datetime(self.category.date_updated),
-            'products': self.get_product_detail_data(
+            'products': self.get_product_list_data(
                 self.category.products.filter(active=True)),
         }
         self.assertEqual(excepted, response.json())
@@ -135,21 +135,19 @@ class TestProduct(ShopAPITestCase):
 
     url = reverse_lazy('shop:product-list')
 
-    @mock.patch(
-        'shop.models.Product.call_external_api',
-        mock_openfoodfact_success
-        )
-    # Le premier paramètre est la méthode à mocker
-    # Le second est le mock à appliquer
     def test_detail(self):
         response = self.client.get(
             reverse('shop:product-detail', kwargs={'pk': self.product.pk}))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             response.json(),
-            self.get_product_detail_data(self.product),            
+            self.get_product_detail_data(self.product)
             )
 
+    @mock.patch(
+        'shop.models.Product.call_external_api',
+        mock_openfoodfact_success
+        )
     def test_list(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
@@ -158,6 +156,10 @@ class TestProduct(ShopAPITestCase):
             self.get_product_list_data([self.product, self.product_2])
             )
 
+    @mock.patch(
+        'shop.models.Product.call_external_api',
+        mock_openfoodfact_success
+        )
     def test_list_filter(self):
         response = self.client.get(
             self.url + '?category_id=%i' % self.category.pk)

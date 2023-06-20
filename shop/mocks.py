@@ -1,7 +1,7 @@
 import requests
 
 # l'ecoscore est stocké dans une constante et sera réutilisé dans nos tests
-ECOSCORE_GRADE = 'd'
+ECOSCORE_GRADE = 'b'
 
 
 def mock_openfoodfact_success(self, method, url):
